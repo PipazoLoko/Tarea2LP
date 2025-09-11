@@ -11,8 +11,8 @@ static Celda *celda(struct Juego *j, int x, int y) {
 }
 
 static int buscar_primer_alien_en_col(struct Juego *j, int col) {
-    // desde y=1 (arriba del jugador) hacia la parte superior
-    for (int y = 1; y < j->t->H; ++y) {
+    // desde y=0 (base) hacia arriba; jugador está en y=-1
+    for (int y = 0; y < j->t->H; ++y) {
         if (celda(j, col, y)->alien) return y;
     }
     return -1;
@@ -23,7 +23,7 @@ bool arma_normal(struct Juego *j) {
     int y = buscar_primer_alien_en_col(j, c);
     if (y >= 0) {
         celda(j, c, y)->dano_pend += 1;
-        snprintf(j->msg, sizeof(j->msg), "Normal impactó en (%d,%d)", c, y);
+        snprintf(j->msg, sizeof(j->msg), "Normal impacto en (%d,%d)", c, y);
     } else {
         snprintf(j->msg, sizeof(j->msg), "Normal: sin objetivo");
     }
@@ -32,7 +32,7 @@ bool arma_normal(struct Juego *j) {
 
 bool arma_perforador(struct Juego *j) {
     if (j->armas.ammo_perforador <= 0) {
-        snprintf(j->msg, sizeof(j->msg), "Sin munición Perforador");
+        snprintf(j->msg, sizeof(j->msg), "Sin municion Perforador");
         return false; // no procede
     }
     int c = j->jugador_x;
@@ -50,7 +50,7 @@ bool arma_perforador(struct Juego *j) {
 
 bool arma_especial(struct Juego *j) {
     if (j->armas.ammo_especial <= 0) {
-        snprintf(j->msg, sizeof(j->msg), "Sin munición Especial");
+        snprintf(j->msg, sizeof(j->msg), "Sin municion Especial");
         return false;
     }
     int c = j->jugador_x;
@@ -63,7 +63,7 @@ bool arma_especial(struct Juego *j) {
             if (c - 1 >= 0) celda(j, c - 1, y + 1)->dano_pend += 1;
             if (c + 1 < j->t->W) celda(j, c + 1, y + 1)->dano_pend += 1;
         }
-        snprintf(j->msg, sizeof(j->msg), "Especial: golpe y rebotó en %d,%d", c, y);
+        snprintf(j->msg, sizeof(j->msg), "Especial: golpe y reboto en %d,%d", c, y);
     } else {
         snprintf(j->msg, sizeof(j->msg), "Especial: sin objetivo");
     }
@@ -73,7 +73,7 @@ bool arma_especial(struct Juego *j) {
 
 bool disparar_armas(struct Juego *j, int arma_id) {
     if (arma_id < 0 || arma_id > 2) {
-        snprintf(j->msg, sizeof(j->msg), "Arma inválida");
+        snprintf(j->msg, sizeof(j->msg), "Arma invalida");
         return false;
     }
     FuncArmas f = j->armas.fn[arma_id];
@@ -83,4 +83,3 @@ bool disparar_armas(struct Juego *j, int arma_id) {
     }
     return f(j);
 }
-

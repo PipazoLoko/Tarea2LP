@@ -7,8 +7,8 @@ Requiere un compilador C11. Para compilar y ejecutar:
     make
     ./juego
 
-Luego seleccione la dificultad (0 Fácil, 1 Difícil) y use:
-- A / D: mover la nave en la base (y = 0).
+Luego seleccione la dificultad (0 Facil, 1 Dificil) y use:
+- A / D: mover la nave; el jugador esta en y = -1 (debajo del tablero).
 - 1: Disparo normal (munición infinita).
 - 2: Disparo perforador (7 disparos al inicio).
 - 3: Disparo especial (>= 1 al inicio).
@@ -17,8 +17,9 @@ Luego seleccione la dificultad (0 Fácil, 1 Difícil) y use:
 HUD
 ----
 Debajo del tablero se muestra: Turno, aliens restantes del inventario, aliens
-vivos, municiones (1/2/3) y el último mensaje de evento (impactos, drops,
-entradas inválidas).
+vivos, municiones (1/2/3) y el ultimo mensaje de evento (impactos, drops,
+entradas invalidas). El prompt "Accion [A/D/1/2/3/Q]" forma parte del HUD y
+permanece fijo en pantalla.
 
 Armas
 -----
@@ -58,10 +59,14 @@ Al destruir un alien existe una tirada aleatoria inmediata:
 
 Supuestos y notas
 -----------------
-- Un alien por celda: si el destino del movimiento está ocupado, el alien
+- Entradas invalidas: se acepta exactamente 1 caracter por linea. Cadenas como
+  "aa", "dd" o "dadss" son invalidas y no consumen turno.
+- Bordes: intentar moverse fuera del tablero es invalido y no consume turno.
+- Un alien por celda: si el destino del movimiento esta ocupado, el alien
   permanece en su celda (no hay colisiones entre ellos).
-- Orden del turno: acción válida -> (si disparo) resolución de daño -> mover
+- Orden del turno: accion valida -> (si disparo) resolucion de dano -> mover
   aliens cada 2 turnos -> spawns del turno -> render.
-- Derrota si algún alien alcanza y=0 (la base). Victoria si el inventario se
-  agota y no quedan aliens vivos.
-
+- Final: al ganar o perder, el tablero queda visible con el mensaje
+  correspondiente ("VICTORIA" o "DERROTA"); presione Enter para salir.
+- Condicion de derrota: si algun alien alcanza y=0 (la base). Condicion de
+  victoria: el inventario se agota y no quedan aliens vivos.

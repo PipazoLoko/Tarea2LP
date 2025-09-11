@@ -19,6 +19,7 @@ typedef struct Juego {
     int vivos;       // aliens vivos actualmente en el tablero
     int jugador_x;   // posición x del jugador (y = 0)
     char msg[128];   // mensaje HUD del último evento
+    int fin;         // flag de fin para ocultar prompt en pantalla final
 } Juego;
 
 // Inicializa y libera el juego

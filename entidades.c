@@ -62,10 +62,10 @@ static void drop_municion(struct Juego *juego) {
     int r = rand() % 100;
     if (r < 25) {
         juego->armas.ammo_perforador += 1;
-        snprintf(juego->msg, sizeof(juego->msg), "+1 munición Perforador");
+        snprintf(juego->msg, sizeof(juego->msg), "+1 municion Perforador");
     } else if (r < 40) { // 15% siguiente tramo
         juego->armas.ammo_especial += 1;
-        snprintf(juego->msg, sizeof(juego->msg), "+1 munición Especial");
+        snprintf(juego->msg, sizeof(juego->msg), "+1 municion Especial");
     }
 }
 
@@ -87,4 +87,3 @@ void resolver_danos(struct Juego *juego) {
         }
     }
 }
-

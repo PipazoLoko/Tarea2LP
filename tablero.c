@@ -56,13 +56,8 @@ void tablero_cerrar(Tablero *t) {
 }
 
 static char render_celda(struct Juego *juego, int x, int y) {
-    (void)juego; // sólo para player y HUD
     Tablero *t = juego->t;
     Celda *cel = (Celda *)t->celdas[y][x];
-    if (y == 0 && x == juego->jugador_x) {
-        if (cel->dano_pend > 0) return 'X';
-        return '^'; // jugador
-    }
     if (cel->dano_pend > 0) return 'X';
     if (cel->alien == NULL) return ' ';
     switch (cel->alien->tipo) {
@@ -74,8 +69,9 @@ static char render_celda(struct Juego *juego, int x, int y) {
 
 void tablero_imprimir(struct Juego *juego) {
     Tablero *t = juego->t;
-    // Limpieza simple de pantalla
-    printf("\033[2J\033[H");
+    // Reposicionar cursor al inicio y limpiar hasta el final para
+    // reescribir el frame sin desplazar la terminal.
+    printf("\033[H\033[J");
     for (int y = t->H - 1; y >= 0; --y) {
         for (int x = 0; x < t->W; ++x) {
             char c = render_celda(juego, x, y);
@@ -84,13 +80,24 @@ void tablero_imprimir(struct Juego *juego) {
         printf("\n");
     }
 
+    // Línea de base (jugador en y = -1)
+    for (int x = 0; x < t->W; ++x) {
+        if (x == juego->jugador_x) printf(" ^ "); else printf("   ");
+    }
+    printf("\n");
+
     // HUD
     int inventario_restante = juego->pool.drone + juego->pool.skater + juego->pool.especial;
     printf("Turno: %d | Inv: %d | Vivos: %d | Mun (1/2/3): INF/%d/%d\n",
            juego->turno, inventario_restante, juego->vivos,
            juego->armas.ammo_perforador, juego->armas.ammo_especial);
-    if (juego->msg[0] != '\0') {
-        printf("%s\n", juego->msg);
+    if (juego->msg[0] != '\0') printf("%s\n", juego->msg);
+    // Prompt integrado, excepto cuando el juego terminó
+    if (!juego->fin) {
+        printf("Accion [A/D/1/2/3/Q]: ");
+        fflush(stdout);
+    } else {
+        fflush(stdout);
     }
 
     // limpiar indicadores de daño para el próximo render
@@ -101,4 +108,3 @@ void tablero_imprimir(struct Juego *juego) {
         }
     }
 }
-
