@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "tablero.h": "c",
+    "armas.h": "c"
+  }
+}

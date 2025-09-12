@@ -6,10 +6,23 @@
 #include "tablero.h"
 #include "main.h"
 
+/*
+ * Nombre: celda
+ * Parámetros: Juego *j, int x, int y
+ * Retorno: Celda* (puntero a la celda en (x,y))
+ * Descripción: Acceso auxiliar a la celda tipada a partir de la matriz void***.
+ */
 static Celda *celda(struct Juego *j, int x, int y) {
     return (Celda *)j->t->celdas[y][x];
 }
 
+/*
+ * Nombre: buscar_primer_alien_en_col
+ * Parámetros: Juego *j, int col
+ * Retorno: int (fila y del primer alien; -1 si no hay)
+ * Descripción: Busca el primer alien visible desde la base hacia arriba en la
+ *              columna indicada.
+ */
 static int buscar_primer_alien_en_col(struct Juego *j, int col) {
     // desde y=0 (base) hacia arriba; jugador está en y=-1
     for (int y = 0; y < j->t->H; ++y) {
@@ -18,21 +31,35 @@ static int buscar_primer_alien_en_col(struct Juego *j, int col) {
     return -1;
 }
 
+/*
+ * Nombre: arma_normal
+ * Parámetros: Juego *j
+ * Retorno: bool (true: procede y consume turno)
+ * Descripción: Disparo recto con daño 1 al primer alien de la columna. Munición
+ *              infinita.
+ */
 bool arma_normal(struct Juego *j) {
     int c = j->jugador_x;
     int y = buscar_primer_alien_en_col(j, c);
     if (y >= 0) {
         celda(j, c, y)->dano_pend += 1;
-        snprintf(j->msg, sizeof(j->msg), "Normal impacto en (%d,%d)", c, y);
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Normal impacto en (%d,%d)", c, y);
     } else {
-        snprintf(j->msg, sizeof(j->msg), "Normal: sin objetivo");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Normal: sin objetivo");
     }
     return true; // siempre procede
 }
 
+/*
+ * Nombre: arma_perforador
+ * Parámetros: Juego *j
+ * Retorno: bool (true si procede; requiere munición)
+ * Descripción: Disparo que atraviesa y daña con 1 a todos los aliens de la
+ *              columna actual. Consume munición.
+ */
 bool arma_perforador(struct Juego *j) {
     if (j->armas.ammo_perforador <= 0) {
-        snprintf(j->msg, sizeof(j->msg), "Sin municion Perforador");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Sin municion Perforador");
         return false; // no procede
     }
     int c = j->jugador_x;
@@ -44,13 +71,20 @@ bool arma_perforador(struct Juego *j) {
         }
     }
     j->armas.ammo_perforador--;
-    snprintf(j->msg, sizeof(j->msg), "Perforador: %d impacto(s)", impactos);
+    snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Perforador: %d impacto(s)", impactos);
     return true;
 }
 
+/*
+ * Nombre: arma_especial
+ * Parámetros: Juego *j
+ * Retorno: bool (true si procede; requiere munición)
+ * Descripción: Disparo especial con daño 2 al impacto y daño 1 en rebotes
+ *              diagonales una fila arriba.
+ */
 bool arma_especial(struct Juego *j) {
     if (j->armas.ammo_especial <= 0) {
-        snprintf(j->msg, sizeof(j->msg), "Sin municion Especial");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Sin municion Especial");
         return false;
     }
     int c = j->jugador_x;
@@ -63,22 +97,29 @@ bool arma_especial(struct Juego *j) {
             if (c - 1 >= 0) celda(j, c - 1, y + 1)->dano_pend += 1;
             if (c + 1 < j->t->W) celda(j, c + 1, y + 1)->dano_pend += 1;
         }
-        snprintf(j->msg, sizeof(j->msg), "Especial: golpe y reboto en %d,%d", c, y);
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Especial: golpe y reboto en %d,%d", c, y);
     } else {
-        snprintf(j->msg, sizeof(j->msg), "Especial: sin objetivo");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Especial: sin objetivo");
     }
     j->armas.ammo_especial--;
     return true;
 }
 
+/*
+ * Nombre: disparar_armas
+ * Parámetros: Juego *j, int arma_id (0..2)
+ * Retorno: bool (true si el disparo se ejecutó)
+ * Descripción: Valida el id y resuelve el disparo vía arreglo de punteros a
+ *              función (armas.fn).
+ */
 bool disparar_armas(struct Juego *j, int arma_id) {
     if (arma_id < 0 || arma_id > 2) {
-        snprintf(j->msg, sizeof(j->msg), "Arma invalida");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Arma invalida");
         return false;
     }
     FuncArmas f = j->armas.fn[arma_id];
     if (!f) {
-        snprintf(j->msg, sizeof(j->msg), "Arma no configurada");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Arma no configurada");
         return false;
     }
     return f(j);

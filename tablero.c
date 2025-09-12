@@ -5,6 +5,12 @@
 #include "tablero.h"
 #include "entidades.h"
 
+/*
+ * Nombre: nueva_celda
+ * Parámetros: (ninguno)
+ * Retorno: Celda* (puntero a celda inicializada)
+ * Descripción: Reserva e inicializa una celda vacía con daño pendiente en 0.
+ */
 static Celda *nueva_celda(void) {
     Celda *c = (Celda *)malloc(sizeof(Celda));
     if (c) {
@@ -14,6 +20,13 @@ static Celda *nueva_celda(void) {
     return c;
 }
 
+/*
+ * Nombre: tablero_crear
+ * Parámetros: int ancho, int alto
+ * Retorno: Tablero* (puntero a tablero creado) o NULL en error
+ * Descripción: Reserva el struct Tablero y su matriz void*** (H x W). Cada
+ *              posición contiene un (void*) apuntando a Celda*.
+ */
 Tablero *tablero_crear(int ancho, int alto) {
     Tablero *t = (Tablero *)malloc(sizeof(Tablero));
     if (!t) return NULL;
@@ -39,6 +52,12 @@ Tablero *tablero_crear(int ancho, int alto) {
     return t;
 }
 
+/*
+ * Nombre: tablero_cerrar
+ * Parámetros: Tablero *t
+ * Retorno: void
+ * Descripción: Libera todas las Celdas, la matriz void*** y el propio Tablero.
+ */
 void tablero_cerrar(Tablero *t) {
     if (!t) return;
     if (t->celdas) {
@@ -55,6 +74,13 @@ void tablero_cerrar(Tablero *t) {
     free(t);
 }
 
+/*
+ * Nombre: render_celda
+ * Parámetros: Juego *juego, int x, int y
+ * Retorno: char (carácter representativo de la celda)
+ * Descripción: Devuelve el carácter visible para la celda (alien, vacío o
+ *              impacto 'X') según su contenido y daño pendiente.
+ */
 static char render_celda(struct Juego *juego, int x, int y) {
     Tablero *t = juego->t;
     Celda *cel = (Celda *)t->celdas[y][x];
@@ -67,6 +93,13 @@ static char render_celda(struct Juego *juego, int x, int y) {
     }
 }
 
+/*
+ * Nombre: tablero_imprimir
+ * Parámetros: Juego *juego
+ * Retorno: void
+ * Descripción: Renderiza el tablero completo, la línea de base del jugador en
+ *              y=-1 y el HUD persistente (incluye prompt si el juego no finalizó).
+ */
 void tablero_imprimir(struct Juego *juego) {
     Tablero *t = juego->t;
     // reposicionar cursor al inicio y limpiar hasta el final para
@@ -91,7 +124,7 @@ void tablero_imprimir(struct Juego *juego) {
     printf("Turno: %d | Inv: %d | Vivos: %d | Mun (1/2/3): INF/%d/%d\n",
            juego->turno, inventario_restante, juego->vivos,
            juego->armas.ammo_perforador, juego->armas.ammo_especial);
-    if (juego->msg[0] != '\0') printf("%s\n", juego->msg);
+    if (juego->mensaje_hud[0] != '\0') printf("%s\n", juego->mensaje_hud);
     // Prompt integrado, excepto cuando el juego terminó
     if (!juego->fin) {
         printf("Accion [A/D/1/2/3/Q]: ");

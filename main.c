@@ -10,12 +10,23 @@
 #include "armas.h"
 #include "spawn.h"
 
-// Inventario o reserva total de aliens
-static int total_inventario(PoolAliens *p) { 
-    return p->drone + p->skater + p->especial; 
+/*
+ * Nombre: total_inventario
+ * Parametros: PoolAliens *p / reserva de enemigos
+ * Retorno: int / cantidad total de aliens restantes
+ * Descripcion: devuelve la suma del stock restante de aliens (drone+skater+especial), se usa en HUD y en condiciones de fin
+ */
+static int total_inventario(PoolAliens *p) {
+    int stock_restante = p->drone + p->skater + p->especial;
+    return stock_restante;
 }
 
-//itera sobre las celdas del eje x para revisar si existe algun alien o no en la base; retorna 1 si lo hay, de caso contrario retorna 0 
+/*
+ * Nombre: hay_alien_en_base
+ * Parametros: Juego *j
+ * Retorno: int / 1 si hay alien en y=0, de lo contrario 0 
+ * Descripcion: recorre la fila-base (y=0) para verificar si algun alien alcanzo la base, la derota lo ve otra funcion
+ */
 static int hay_alien_en_base(Juego *j) {
     for (int x = 0; x < j->t->W; ++x) {
         Celda *c = (Celda *)j->t->celdas[0][x];
@@ -24,12 +35,18 @@ static int hay_alien_en_base(Juego *j) {
     return 0;
 }
 
+/*
+ * Nombre: juego_iniciar
+ * Parametros: Juego *j, int dificultad / 0 facil, 1 dificil
+ * Retorno: bool / true si inicia correctamente, false de lo contrario
+ * Descripcion: crea el tablero segun dificultad, configura armas y sus punteros a funcion, inicializa contadores y ejecuta el sembrado inicial de aliens
+ */
 bool juego_iniciar(Juego *j, int dificultad) {
-    memset(j, 0, sizeof(*j));
+    *j = (Juego){0}; // inicializa en 0 todos los bytes de juego => punteros en NULL, int en 0...
     j->dificultad = dificultad;
     j->turno = 0;
     j->vivos = 0;
-    j->msg[0] = '\0';
+    j->mensaje_hud[0] = '\0';
 
     int W = (dificultad == 0) ? 5 : 7;
     int H = 15;
@@ -51,6 +68,13 @@ bool juego_iniciar(Juego *j, int dificultad) {
     return true;
 }
 
+/*
+ * Nombre: juego_cerrar
+ * Parametros: Juego *j (estado principal)
+ * Retorno: void
+ * Descripcion: Libera todos los recursos del juego. Elimina aliens restantes,
+ *              y libera la memoria asociada al tablero (void***).
+ */
 void juego_cerrar(Juego *j) {
     // liberar aliens restantes
     for (int y = 0; y < j->t->H; ++y) {
@@ -64,22 +88,43 @@ void juego_cerrar(Juego *j) {
 }
 
 // UI persistente (pantalla alterna)
+/*
+ * Nombre: ui_enter
+ * Parametros: (ninguno)
+ * Retorno: void
+ * Descripcion: Activa el buffer alterno de terminal, oculta el cursor y
+ *              posiciona el cursor al inicio para render persistente.
+ */
 static void ui_enter(void) {
     // buffer alterno + ocultar cursor + posicionar al inicio
     printf("\033[?1049h\033[H\033[J\033[?25l");
     fflush(stdout);
 }
 
+/*
+ * Nombre: ui_leave
+ * Parametros: (ninguno)
+ * Retorno: void
+ * Descripcion: Restaura el cursor y vuelve al buffer principal de la terminal.
+ */
 static void ui_leave(void) {
     // restaurar cursor y buffer principal
     printf("\033[?25h\033[?1049l\n");
     fflush(stdout);
 }
 
+/*
+ * Nombre: leer_accion
+ * Parametros: (ninguno)
+ * Retorno: int (caracter de accion en mayuscula; -1 si invalida; 'Q' para salir)
+ * Descripcion: Lee una linea de la entrada estandar y la valida. Acepta
+ *              exactamente un caracter no-espacio; cualquier otra entrada se
+ *              considera invalida.
+ */
 static int leer_accion(void) {
     char buf[256];
     if (!fgets(buf, sizeof(buf), stdin)) return 'Q';
-    // aceptar exactamente un carácter no-espacio. si hay más de uno, inválido
+    // aceptar exactamente un caracter no-espacio. si hay mas de uno, invalido
     int count = 0;
     char c = 0;
     for (int i = 0; buf[i]; ++i) {
@@ -89,23 +134,40 @@ static int leer_accion(void) {
             count++;
         }
     }
-    if (count != 1) return -1; // inválido si vacío o más de uno
+    if (count != 1) return -1; // invalido si vacio o mas de uno
     if (c >= 'a' && c <= 'z') c = (char)toupper(c);
     return c;
 }
 
+/*
+ * Nombre: intentar_mover
+ * Parametros: Juego *j, int dir (-1 izquierda, +1 derecha)
+ * Retorno: bool (true si el movimiento ocurrio; false si fue invalido)
+ * Descripcion: Intenta mover al jugador una columna dentro de los limites. En
+ *              caso valido, actualiza mensaje HUD y consume turno; si es
+ *              invalido, informa y no consume turno.
+ */
 static bool intentar_mover(Juego *j, int dir) {
     int nx = j->jugador_x + dir;
     if (nx < 0 || nx >= j->t->W) {
-        snprintf(j->msg, sizeof(j->msg), "No puedes salir del tablero");
+        snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "No puedes salir del tablero");
         return false; // no consume turno
     }
     j->jugador_x = nx;
-    snprintf(j->msg, sizeof(j->msg), "Movido a x=%d", j->jugador_x);
+    snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Movido a x=%d", j->jugador_x);
     j->turno++;
     return true;
 }
 
+/*
+ * Nombre: juego_correr
+ * Parametros: Juego *j (estado principal)
+ * Retorno: void
+ * Descripcion: Ejecuta el ciclo de turnos del juego con HUD persistente. Por
+ *              cada accion valida, resuelve disparos, mueve aliens cada 2
+ *              turnos, intenta spawns y re-renderiza. Gestiona condiciones de
+ *              victoria/derrota mostrando el tablero final.
+ */
 void juego_correr(Juego *j) {
     ui_enter();
     int salir = 0;
@@ -113,14 +175,14 @@ void juego_correr(Juego *j) {
         tablero_imprimir(j); // render + HUD + prompt persistente
         if (total_inventario(&j->pool) == 0 && j->vivos == 0) {
             // Pantalla final persistente con mensaje "VICTORIA"
-            j->fin = 1; snprintf(j->msg, sizeof(j->msg), "VICTORIA");
+            j->fin = 1; snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "VICTORIA");
             tablero_imprimir(j);
             char tmp[8]; fgets(tmp, sizeof(tmp), stdin); // esperar Enter
             ui_leave();
             return;
         }
         if (hay_alien_en_base(j)) {
-            j->fin = 1; snprintf(j->msg, sizeof(j->msg), "DERROTA");
+            j->fin = 1; snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "DERROTA");
             tablero_imprimir(j);
             char tmp[8]; fgets(tmp, sizeof(tmp), stdin);
             ui_leave();
@@ -128,7 +190,7 @@ void juego_correr(Juego *j) {
         }
 
         int act = leer_accion();
-        bool procedio = false; // HUD persistente: no borramos msg aquí
+        bool procedio = false; // HUD persistente: no borramos mensaje_hud aqui
         if (act == 'Q') { 
             salir = 1; 
             continue; 
@@ -140,11 +202,11 @@ void juego_correr(Juego *j) {
             case '2': procedio = disparar_armas(j, 1); if (procedio) { resolver_danos(j); j->turno++; } break;
             case '3': procedio = disparar_armas(j, 2); if (procedio) { resolver_danos(j); j->turno++; } break;
             default:
-                snprintf(j->msg, sizeof(j->msg), "Entrada invalida");
+                snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Entrada invalida");
                 break; // no consume turno
         }
 
-        // al cierre del turno válido: movimiento y spawn
+        // al cierre del turno valido: movimiento y spawn
         if (procedio) {
             if (j->turno % 2 == 0) {
                 mover_aliens(j);
@@ -155,6 +217,13 @@ void juego_correr(Juego *j) {
     ui_leave();
 }
 
+/*
+ * Nombre: main
+ * Parametros: (ninguno)
+ * Retorno: int (0 en exito, distinto de 0 en error)
+ * Descripcion: Punto de entrada. Pide dificultad, inicializa el juego, corre el
+ *              bucle principal y libera recursos al finalizar.
+ */
 int main(void) {
     srand((unsigned)time(NULL));
     int dificultad = 0;

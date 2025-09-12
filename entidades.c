@@ -7,8 +7,13 @@
 #include "tablero.h"
 #include "main.h"
 
-static int clamp(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
-
+/*
+ * Nombre: mover_un_alien
+ * Parámetros: Juego *juego, Alien *a
+ * Retorno: void
+ * Descripción: Calcula y aplica el movimiento de un alien según su tipo:
+ *              baja una celda y puede desplazarse horizontalmente con rebote.
+ */
 static void mover_un_alien(struct Juego *juego, Alien *a) {
     Tablero *t = juego->t;
     int nx = a->x;
@@ -44,6 +49,12 @@ static void mover_un_alien(struct Juego *juego, Alien *a) {
     }
 }
 
+/*
+ * Nombre: mover_aliens
+ * Parámetros: Juego *juego
+ * Retorno: void
+ * Descripción: Recorre el tablero y mueve todos los aliens vivos una vez.
+ */
 void mover_aliens(struct Juego *juego) {
     Tablero *t = juego->t;
     // Recorremos de abajo hacia arriba para no mover dos veces el mismo
@@ -57,18 +68,32 @@ void mover_aliens(struct Juego *juego) {
     }
 }
 
+/*
+ * Nombre: drop_municion
+ * Parámetros: Juego *juego
+ * Retorno: void
+ * Descripción: Ejecuta tirada de drop al eliminar un alien y otorga munición
+ *              extra al jugador según probabilidades.
+ */
 static void drop_municion(struct Juego *juego) {
     // 25% perforador, 15% especial (ajustable)
     int r = rand() % 100;
     if (r < 25) {
         juego->armas.ammo_perforador += 1;
-        snprintf(juego->msg, sizeof(juego->msg), "+1 municion Perforador");
+        snprintf(juego->mensaje_hud, sizeof(juego->mensaje_hud), "+1 municion Perforador");
     } else if (r < 40) { // 15% siguiente tramo
         juego->armas.ammo_especial += 1;
-        snprintf(juego->msg, sizeof(juego->msg), "+1 municion Especial");
+        snprintf(juego->mensaje_hud, sizeof(juego->mensaje_hud), "+1 municion Especial");
     }
 }
 
+/*
+ * Nombre: resolver_danos
+ * Parámetros: Juego *juego
+ * Retorno: void
+ * Descripción: Consolida el daño marcado en cada celda: reduce HP, elimina
+ *              aliens muertos, decrementa 'vivos' y evalúa drops.
+ */
 void resolver_danos(struct Juego *juego) {
     Tablero *t = juego->t;
     for (int y = 0; y < t->H; ++y) {
