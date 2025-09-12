@@ -69,8 +69,8 @@ static char render_celda(struct Juego *juego, int x, int y) {
 
 void tablero_imprimir(struct Juego *juego) {
     Tablero *t = juego->t;
-    // Reposicionar cursor al inicio y limpiar hasta el final para
-    // reescribir el frame sin desplazar la terminal.
+    // reposicionar cursor al inicio y limpiar hasta el final para
+    // reescribir el frame sin desplazar la terminal
     printf("\033[H\033[J");
     for (int y = t->H - 1; y >= 0; --y) {
         for (int x = 0; x < t->W; ++x) {

@@ -10,8 +10,12 @@
 #include "armas.h"
 #include "spawn.h"
 
-static int total_inventario(PoolAliens *p) { return p->drone + p->skater + p->especial; }
+// Inventario o reserva total de aliens
+static int total_inventario(PoolAliens *p) { 
+    return p->drone + p->skater + p->especial; 
+}
 
+//itera sobre las celdas del eje x para revisar si existe algun alien o no en la base; retorna 1 si lo hay, de caso contrario retorna 0 
 static int hay_alien_en_base(Juego *j) {
     for (int x = 0; x < j->t->W; ++x) {
         Celda *c = (Celda *)j->t->celdas[0][x];
@@ -59,15 +63,15 @@ void juego_cerrar(Juego *j) {
     tablero_cerrar(j->t);
 }
 
-// --- UI persistente (pantalla alterna) ---
+// UI persistente (pantalla alterna)
 static void ui_enter(void) {
-    // Buffer alterno + ocultar cursor + posicionar al inicio
+    // buffer alterno + ocultar cursor + posicionar al inicio
     printf("\033[?1049h\033[H\033[J\033[?25l");
     fflush(stdout);
 }
 
 static void ui_leave(void) {
-    // Restaurar cursor y buffer principal
+    // restaurar cursor y buffer principal
     printf("\033[?25h\033[?1049l\n");
     fflush(stdout);
 }
@@ -75,7 +79,7 @@ static void ui_leave(void) {
 static int leer_accion(void) {
     char buf[256];
     if (!fgets(buf, sizeof(buf), stdin)) return 'Q';
-    // Aceptar exactamente un carácter no-espacio. Si hay más de uno, inválido.
+    // aceptar exactamente un carácter no-espacio. si hay más de uno, inválido
     int count = 0;
     char c = 0;
     for (int i = 0; buf[i]; ++i) {
@@ -106,7 +110,7 @@ void juego_correr(Juego *j) {
     ui_enter();
     int salir = 0;
     while (!salir) {
-        tablero_imprimir(j); // Render + HUD + prompt persistente
+        tablero_imprimir(j); // render + HUD + prompt persistente
         if (total_inventario(&j->pool) == 0 && j->vivos == 0) {
             // Pantalla final persistente con mensaje "VICTORIA"
             j->fin = 1; snprintf(j->msg, sizeof(j->msg), "VICTORIA");
@@ -125,7 +129,10 @@ void juego_correr(Juego *j) {
 
         int act = leer_accion();
         bool procedio = false; // HUD persistente: no borramos msg aquí
-        if (act == 'Q') { salir = 1; continue; }
+        if (act == 'Q') { 
+            salir = 1; 
+            continue; 
+        }
         switch (act) {
             case 'A': procedio = intentar_mover(j, -1); break;
             case 'D': procedio = intentar_mover(j, +1); break;
@@ -137,7 +144,7 @@ void juego_correr(Juego *j) {
                 break; // no consume turno
         }
 
-        // Al cierre del turno válido: movimiento y spawn
+        // al cierre del turno válido: movimiento y spawn
         if (procedio) {
             if (j->turno % 2 == 0) {
                 mover_aliens(j);

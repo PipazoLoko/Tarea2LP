@@ -64,7 +64,7 @@ static void instanciar_en_superior(struct Juego *j, int tipo) {
 }
 
 void spawn_inicio(struct Juego *j) {
-    // Configuración por dificultad
+    // configuración por dificultad
     if (j->dificultad == 0) {
         j->pool.drone = 6; j->pool.skater = 4; j->pool.especial = 5; // total 15
         j->pool.vivos_tope = 6;
@@ -73,7 +73,7 @@ void spawn_inicio(struct Juego *j) {
         j->pool.vivos_tope = 8;
     }
 
-    // Sembrado inicial: 2 (Fácil) / 3 (Difícil)
+    // sembrado inicial: 2 (Fácil) / 3 (Difícil)
     int iniciales = (j->dificultad == 0) ? 2 : 3;
     for (int i = 0; i < iniciales; ++i) {
         int tipo = elegir_tipo(&j->pool);
