@@ -9,9 +9,9 @@
 
 /*
  * Nombre: mover_un_alien
- * Parámetros: Juego *juego, Alien *a
+ * Parametros: Juego *juego, Alien *a
  * Retorno: void
- * Descripción: Calcula y aplica el movimiento de un alien según su tipo:
+ * Descripcion: Calcula y aplica el movimiento de un alien segun su tipo:
  *              baja una celda y puede desplazarse horizontalmente con rebote.
  */
 static void mover_un_alien(struct Juego *juego, Alien *a) {
@@ -34,33 +34,33 @@ static void mover_un_alien(struct Juego *juego, Alien *a) {
         else if (nx >= t->W) { nx = t->W - 2; a->dx = -1; }
     }
 
-    // Respeta restricción: máximo un alien por celda
+    // Respeta restriccion: maximo un alien por celda
     if (ny < 0) ny = 0; // clamp por seguridad
-    Celda *dest = (Celda *)t->celdas[ny][nx];
+    Celda *dest = celda_at(t, nx, ny);
     if (dest->alien == NULL) {
         // Liberar celda origen
-        Celda *orig = (Celda *)t->celdas[a->y][a->x];
+        Celda *orig = celda_at(t, a->x, a->y);
         orig->alien = NULL;
         // Mover
         dest->alien = a;
         a->x = nx; a->y = ny;
     } else {
-        // Si está ocupada, se queda en su lugar original (sin colisiones)
+        // Si esta ocupada, se queda en su lugar original (sin colisiones)
     }
 }
 
 /*
  * Nombre: mover_aliens
- * Parámetros: Juego *juego
+ * Parametros: Juego *juego
  * Retorno: void
- * Descripción: Recorre el tablero y mueve todos los aliens vivos una vez.
+ * Descripcion: Recorre el tablero y mueve todos los aliens vivos una vez.
  */
 void mover_aliens(struct Juego *juego) {
     Tablero *t = juego->t;
     // Recorremos de abajo hacia arriba para no mover dos veces el mismo
     for (int y = 1; y < t->H; ++y) {
         for (int x = 0; x < t->W; ++x) {
-            Celda *cel = (Celda *)t->celdas[y][x];
+            Celda *cel = celda_at(t, x, y);
             Alien *a = cel->alien;
             if (!a) continue;
             mover_un_alien(juego, a);
@@ -70,10 +70,10 @@ void mover_aliens(struct Juego *juego) {
 
 /*
  * Nombre: drop_municion
- * Parámetros: Juego *juego
+ * Parametros: Juego *juego
  * Retorno: void
- * Descripción: Ejecuta tirada de drop al eliminar un alien y otorga munición
- *              extra al jugador según probabilidades.
+ * Descripcion: Ejecuta tirada de drop al eliminar un alien y otorga municion
+ *              extra al jugador segun probabilidades.
  */
 static void drop_municion(struct Juego *juego) {
     // 25% perforador, 15% especial (ajustable)
@@ -89,16 +89,16 @@ static void drop_municion(struct Juego *juego) {
 
 /*
  * Nombre: resolver_danos
- * Parámetros: Juego *juego
+ * Parametros: Juego *juego
  * Retorno: void
- * Descripción: Consolida el daño marcado en cada celda: reduce HP, elimina
- *              aliens muertos, decrementa 'vivos' y evalúa drops.
+ * Descripcion: Consolida el daño marcado en cada celda: reduce HP, elimina
+ *              aliens muertos, decrementa 'vivos' y evalua drops.
  */
 void resolver_danos(struct Juego *juego) {
     Tablero *t = juego->t;
     for (int y = 0; y < t->H; ++y) {
         for (int x = 0; x < t->W; ++x) {
-            Celda *cel = (Celda *)t->celdas[y][x];
+            Celda *cel = celda_at(t, x, y);
             if (cel->dano_pend <= 0 || cel->alien == NULL) continue;
             Alien *a = cel->alien;
             a->hp -= cel->dano_pend;

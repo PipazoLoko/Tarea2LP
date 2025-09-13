@@ -9,13 +9,13 @@
 
 /*
  * Nombre: nuevo_alien
- * Parámetros: int tipo, int x, int y
+ * Parametros: int tipo, int x, int y
  * Retorno: Alien* (puntero al alien inicializado)
- * Descripción: Reserva e inicializa un alien del tipo indicado, con HP según
- *              tipo y dirección horizontal aleatoria.
+ * Descripcion: Reserva e inicializa un alien del tipo indicado, con HP segun
+ *              tipo y direccion horizontal aleatoria.
  */
 static Alien *nuevo_alien(int tipo, int x, int y) {
-    Alien *a = (Alien *)malloc(sizeof(Alien));
+    Alien *a = malloc(sizeof *a);
     a->tipo = tipo;
     a->x = x; a->y = y; a->dx = (rand() % 2) ? +1 : -1;
     switch (tipo) {
@@ -28,17 +28,17 @@ static Alien *nuevo_alien(int tipo, int x, int y) {
 
 /*
  * Nombre: total_pool
- * Parámetros: PoolAliens *p
+ * Parametros: PoolAliens *p
  * Retorno: int (total restante)
- * Descripción: Suma los contadores de tipos del pool restante.
+ * Descripcion: Suma los contadores de tipos del pool restante.
  */
 static int total_pool(PoolAliens *p) { return p->drone + p->skater + p->especial; }
 
 /*
  * Nombre: elegir_tipo
- * Parámetros: PoolAliens *p
- * Retorno: int (tipo elegido; -1 si vacío)
- * Descripción: Elige un tipo proporcional al stock restante en el pool.
+ * Parametros: PoolAliens *p
+ * Retorno: int (tipo elegido; -1 si vacio)
+ * Descripcion: Elige un tipo proporcional al stock restante en el pool.
  */
 static int elegir_tipo(PoolAliens *p) {
     int tot = total_pool(p);
@@ -52,22 +52,22 @@ static int elegir_tipo(PoolAliens *p) {
 
 /*
  * Nombre: columna_libre_superior
- * Parámetros: Juego *j
+ * Parametros: Juego *j
  * Retorno: int (columna x libre en fila superior; -1 si llena)
- * Descripción: Encuentra una columna libre en y=H-1, primero por azar con
- *              reintentos y luego por búsqueda lineal.
+ * Descripcion: Encuentra una columna libre en y=H-1, primero por azar con
+ *              reintentos y luego por busqueda lineal.
  */
 static int columna_libre_superior(struct Juego *j) {
-    // Devuelve columna libre en y = H-1, o -1 si está llena
+    // Devuelve columna libre en y = H-1, o -1 si esta llena
     int intentos = 16; // evitar bucles
     while (intentos--) {
         int x = rand() % j->t->W;
-        Celda *c = (Celda *)j->t->celdas[j->t->H - 1][x];
+        Celda *c = celda_at(j->t, x, j->t->H - 1);
         if (c->alien == NULL) return x;
     }
-    // búsqueda lineal por si falló el azar
+    // busqueda lineal por si fallo el azar
     for (int x = 0; x < j->t->W; ++x) {
-        Celda *c = (Celda *)j->t->celdas[j->t->H - 1][x];
+        Celda *c = celda_at(j->t, x, j->t->H - 1);
         if (c->alien == NULL) return x;
     }
     return -1;
@@ -75,9 +75,9 @@ static int columna_libre_superior(struct Juego *j) {
 
 /*
  * Nombre: instanciar_en_superior
- * Parámetros: Juego *j, int tipo
+ * Parametros: Juego *j, int tipo
  * Retorno: void
- * Descripción: Instancia un alien del tipo indicado en la fila superior en una
+ * Descripcion: Instancia un alien del tipo indicado en la fila superior en una
  *              columna libre y actualiza contadores (pool y vivos).
  */
 static void instanciar_en_superior(struct Juego *j, int tipo) {
@@ -86,7 +86,7 @@ static void instanciar_en_superior(struct Juego *j, int tipo) {
     if (x < 0) return; // fila superior llena => posponer
     int y = j->t->H - 1;
     Alien *a = nuevo_alien(tipo, x, y);
-    Celda *c = (Celda *)j->t->celdas[y][x];
+    Celda *c = celda_at(j->t, x, y);
     c->alien = a;
     j->vivos++;
     switch (tipo) {
@@ -98,13 +98,13 @@ static void instanciar_en_superior(struct Juego *j, int tipo) {
 
 /*
  * Nombre: spawn_inicio
- * Parámetros: Juego *j
+ * Parametros: Juego *j
  * Retorno: void
- * Descripción: Configura el pool por dificultad, define el tope de simultáneos
+ * Descripcion: Configura el pool por dificultad, define el tope de simultaneos
  *              y realiza el sembrado inicial de aliens.
  */
 void spawn_inicio(struct Juego *j) {
-    // configuración por dificultad
+    // configuracion por dificultad
     if (j->dificultad == 0) {
         j->pool.drone = 6; j->pool.skater = 4; j->pool.especial = 5; // total 15
         j->pool.vivos_tope = 6;
@@ -113,7 +113,7 @@ void spawn_inicio(struct Juego *j) {
         j->pool.vivos_tope = 8;
     }
 
-    // sembrado inicial: 2 (Fácil) / 3 (Difícil)
+    // sembrado inicial: 2 (Facil) / 3 (Dificil)
     int iniciales = (j->dificultad == 0) ? 2 : 3;
     for (int i = 0; i < iniciales; ++i) {
         int tipo = elegir_tipo(&j->pool);
@@ -123,10 +123,10 @@ void spawn_inicio(struct Juego *j) {
 
 /*
  * Nombre: spawn_turno
- * Parámetros: Juego *j
+ * Parametros: Juego *j
  * Retorno: void
- * Descripción: Si hay stock y cupo disponible, spawnea 1 alien; con 30% intenta
- *              un segundo. Pospone si la fila superior está llena.
+ * Descripcion: Si hay stock y cupo disponible, spawnea 1 alien; con 30% intenta
+ *              un segundo. Pospone si la fila superior esta llena.
  */
 void spawn_turno(struct Juego *j) {
     if (total_pool(&j->pool) <= 0) return;

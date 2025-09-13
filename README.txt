@@ -16,6 +16,13 @@ Luego seleccione la dificultad (0 Facil, 1 Dificil) y use:
 
 HUD
 ----
+El juego mantiene un HUD persistente reimprimiendo el tablero y los datos en el
+mismo lugar en cada frame. Para simplificar, la pantalla se limpia con el
+comando `clear` y luego se vuelve a dibujar todo. Este enfoque funciona en
+Linux y en WSL (Windows Subsystem for Linux), donde `clear` está disponible en
+PATH. En otros entornos puede requerir un equivalente o el uso de secuencias
+ANSI/ncurses.
+
 Debajo del tablero se muestra: Turno, aliens restantes del inventario, aliens
 vivos, municiones (1/2/3) y el ultimo mensaje de evento (impactos, drops,
 entradas invalidas). El prompt "Accion [A/D/1/2/3/Q]" forma parte del HUD y

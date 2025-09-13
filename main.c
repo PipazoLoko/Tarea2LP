@@ -29,7 +29,7 @@ static int total_inventario(PoolAliens *p) {
  */
 static int hay_alien_en_base(Juego *j) {
     for (int x = 0; x < j->t->W; ++x) {
-        Celda *c = (Celda *)j->t->celdas[0][x];
+        Celda *c = celda_at(j->t, x, 0);
         if (c->alien) return 1;
     }
     return 0;
@@ -70,16 +70,15 @@ bool juego_iniciar(Juego *j, int dificultad) {
 
 /*
  * Nombre: juego_cerrar
- * Parametros: Juego *j (estado principal)
+ * Parametros: Juego *j
  * Retorno: void
- * Descripcion: Libera todos los recursos del juego. Elimina aliens restantes,
- *              y libera la memoria asociada al tablero (void***).
+ * Descripcion: libera todos los recursos del juego, elimina aliens restantes, y libera la memoria asociada al tablero (void***).
  */
 void juego_cerrar(Juego *j) {
     // liberar aliens restantes
     for (int y = 0; y < j->t->H; ++y) {
         for (int x = 0; x < j->t->W; ++x) {
-            Celda *c = (Celda *)j->t->celdas[y][x];
+            Celda *c = celda_at(j->t, x, y);
             if (c->alien) free(c->alien);
             c->alien = NULL;
         }
@@ -87,39 +86,31 @@ void juego_cerrar(Juego *j) {
     tablero_cerrar(j->t);
 }
 
-// UI persistente (pantalla alterna)
 /*
  * Nombre: ui_enter
  * Parametros: (ninguno)
  * Retorno: void
- * Descripcion: Activa el buffer alterno de terminal, oculta el cursor y
- *              posiciona el cursor al inicio para render persistente.
+ * Descripcion: Limpia la consola usando el comando 'clear' para la persistentencia del frame
  */
 static void ui_enter(void) {
-    // buffer alterno + ocultar cursor + posicionar al inicio
-    printf("\033[?1049h\033[H\033[J\033[?25l");
-    fflush(stdout);
+    system("clear");
 }
 
 /*
  * Nombre: ui_leave
  * Parametros: (ninguno)
  * Retorno: void
- * Descripcion: Restaura el cursor y vuelve al buffer principal de la terminal.
+ * Descripcion: imprime  un salto de línea al terminar el juego 
  */
 static void ui_leave(void) {
-    // restaurar cursor y buffer principal
-    printf("\033[?25h\033[?1049l\n");
-    fflush(stdout);
+    putchar('\n');
 }
 
 /*
  * Nombre: leer_accion
- * Parametros: (ninguno)
- * Retorno: int (caracter de accion en mayuscula; -1 si invalida; 'Q' para salir)
- * Descripcion: Lee una linea de la entrada estandar y la valida. Acepta
- *              exactamente un caracter no-espacio; cualquier otra entrada se
- *              considera invalida.
+ * Parametros: ninguno
+ * Retorno: int // caracter de accion en mayuscula; -1 si invalida; 'Q' para salir)
+ * Descripcion: lee una linea de la entrada estandar y la valida. acepta exactamente un caracter no-espacio, cualquier otra entrada se considera invalida.
  */
 static int leer_accion(void) {
     char buf[256];
@@ -143,17 +134,15 @@ static int leer_accion(void) {
  * Nombre: intentar_mover
  * Parametros: Juego *j, int dir (-1 izquierda, +1 derecha)
  * Retorno: bool (true si el movimiento ocurrio; false si fue invalido)
- * Descripcion: Intenta mover al jugador una columna dentro de los limites. En
- *              caso valido, actualiza mensaje HUD y consume turno; si es
- *              invalido, informa y no consume turno.
+ * Descripcion: intenta mover al jugador dentro de los limites, en caso valido, actualiza mensaje HUD y consume turno. si es invalido, informa y no consume turno
  */
 static bool intentar_mover(Juego *j, int dir) {
-    int nx = j->jugador_x + dir;
-    if (nx < 0 || nx >= j->t->W) {
+    int x_destino = j->jugador_x + dir;
+    if (x_destino < 0 || x_destino >= j->t->W) {
         snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "No puedes salir del tablero");
         return false; // no consume turno
     }
-    j->jugador_x = nx;
+    j->jugador_x = x_destino;
     snprintf(j->mensaje_hud, sizeof(j->mensaje_hud), "Movido a x=%d", j->jugador_x);
     j->turno++;
     return true;
@@ -230,7 +219,8 @@ int main(void) {
     printf("Seleccione dificultad [0=Facil, 1=Dificil]: ");
     fflush(stdout);
     if (scanf("%d", &dificultad) != 1) dificultad = 0;
-    int ch; while ((ch = getchar()) != '\n' && ch != EOF) {}
+    int ch; 
+    while ((ch = getchar()) != '\n' && ch != EOF) {}
 
     Juego j;
     if (!juego_iniciar(&j, dificultad)) {

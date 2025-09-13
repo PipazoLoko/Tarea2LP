@@ -5,8 +5,7 @@
 #include <stdbool.h>
 #include "main.h"
 
-// Forward para Celda (definida en entidades.h)
-typedef struct Celda Celda;
+typedef struct Celda Celda;// forward para Celda (definida en entidades.h), Ademas asigna alias de Celda al typedef struct celda
 
 typedef struct Tablero {
     int W, H;
@@ -14,11 +13,18 @@ typedef struct Tablero {
     void ***celdas;
 } Tablero;
 
-// Administración de memoria del tablero
+/*
+ * Nombre: celda_at
+ * Parametros: struct Tablero *t, int x, int y
+ * Retorno: Celda* // puntero a la celda en [y][x])
+ * Descripcion: acceso auxiliar a la matriz void*** del tablero. recibe coordenadas (x,y) y devuelve un puntero a la Celda almacenada en esa posición, realiza internamente el cast desde void*. 
+ */
+static inline Celda* celda_at(struct Tablero *t, int x, int y) {
+    return (Celda*)t->celdas[y][x];
+}
+
 Tablero *tablero_crear(int ancho, int alto);
 void tablero_cerrar(Tablero *tablero);
-
-// Render del tablero + HUD
 void tablero_imprimir(struct Juego *juego);
 
 #endif // TABLERO_H

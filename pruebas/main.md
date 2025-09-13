@@ -8,17 +8,17 @@ static int total_inventario: Casi listo, falta entender donde se define su canti
 
 static int hay_alien_en_base: Casi listo, quién verifica la derrota y cómo la utiliza
 
-bool juego_iniciar:
+bool juego_iniciar: Listo 
 
-void juego_cerrar:
+void juego_cerrar: Listo 
 
-static void ui_enter:
+static void ui_enter: Listo 
 
-static void ui_leave:
+static void ui_leave: Listo 
 
-static int leer_accion:
+static int leer_accion: Listo 
 
-static bool intentar_mover:
+static bool intentar_mover: Listo 
 
 void juego_correr:
 

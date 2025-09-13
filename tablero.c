@@ -7,46 +7,35 @@
 
 /*
  * Nombre: nueva_celda
- * Parámetros: (ninguno)
- * Retorno: Celda* (puntero a celda inicializada)
- * Descripción: Reserva e inicializa una celda vacía con daño pendiente en 0.
+ * Parametros: ninguno
+ * Retorno: Celda* / puntero a celda inicializada
+ * Descripcion: reserva memoria para crer una Celda vacia (alien=NULL, dano_pend=0)
  */
 static Celda *nueva_celda(void) {
-    Celda *c = (Celda *)malloc(sizeof(Celda));
-    if (c) {
-        c->alien = NULL;
-        c->dano_pend = 0;
-    }
+    Celda *c = malloc(sizeof *c);
+    c->alien = NULL;
+    c->dano_pend = 0;
     return c;
 }
 
 /*
  * Nombre: tablero_crear
- * Parámetros: int ancho, int alto
- * Retorno: Tablero* (puntero a tablero creado) o NULL en error
- * Descripción: Reserva el struct Tablero y su matriz void*** (H x W). Cada
- *              posición contiene un (void*) apuntando a Celda*.
+ * Parametros: int ancho, int alto
+ * Retorno: Tablero*
+ * Descripcion: reserva memoria para el struct Tablero y su matriz void*** (alto//H x ancho//W). cada posicion contiene un (void*) apuntando a Celda* nueva.
  */
 Tablero *tablero_crear(int ancho, int alto) {
-    Tablero *t = (Tablero *)malloc(sizeof(Tablero));
-    if (!t) return NULL;
+    Tablero *t = malloc(sizeof *t);
     t->W = ancho;
     t->H = alto;
 
     // void ***: filas -> columnas -> (void*)
-    t->celdas = (void ***)malloc(sizeof(void **) * t->H);
-    if (!t->celdas) { free(t); return NULL; }
+    t->celdas = malloc(sizeof *t->celdas * t->H);
     for (int y = 0; y < t->H; ++y) {
-        t->celdas[y] = (void **)malloc(sizeof(void *) * t->W);
-        if (!t->celdas[y]) {
-            for (int k = 0; k < y; ++k) free(t->celdas[k]);
-            free(t->celdas);
-            free(t);
-            return NULL;
-        }
+        t->celdas[y] = malloc(sizeof *t->celdas[y] * t->W);
         for (int x = 0; x < t->W; ++x) {
             Celda *cel = nueva_celda();
-            t->celdas[y][x] = (void *)cel; // (void*) -> Celda*
+            t->celdas[y][x] = cel; // Celda* -> void*
         }
     }
     return t;
@@ -54,17 +43,15 @@ Tablero *tablero_crear(int ancho, int alto) {
 
 /*
  * Nombre: tablero_cerrar
- * Parámetros: Tablero *t
+ * Parametros: Tablero *t
  * Retorno: void
- * Descripción: Libera todas las Celdas, la matriz void*** y el propio Tablero.
+ * Descripcion: libera todas las Celdas, la matriz void*** y el Tablero
  */
 void tablero_cerrar(Tablero *t) {
-    if (!t) return;
     if (t->celdas) {
         for (int y = 0; y < t->H; ++y) {
-            if (!t->celdas[y]) continue;
             for (int x = 0; x < t->W; ++x) {
-                Celda *cel = (Celda *)t->celdas[y][x];
+                Celda *cel = celda_at(t, x, y);
                 free(cel);
             }
             free(t->celdas[y]);
@@ -76,15 +63,13 @@ void tablero_cerrar(Tablero *t) {
 
 /*
  * Nombre: render_celda
- * Parámetros: Juego *juego, int x, int y
- * Retorno: char (carácter representativo de la celda)
- * Descripción: Devuelve el carácter visible para la celda (alien, vacío o
- *              impacto 'X') según su contenido y daño pendiente.
+ * Parametros: Juego *juego, int x, int y
+ * Retorno: char (caracter representativo de la celda)
+ * Descripcion: devuelve el caracter visible para la celda (alien, vacio o impacto 'X') segun su contenido y daño pendiente
  */
 static char render_celda(struct Juego *juego, int x, int y) {
     Tablero *t = juego->t;
-    Celda *cel = (Celda *)t->celdas[y][x];
-    if (cel->dano_pend > 0) return 'X';
+    Celda *cel = celda_at(t, x, y);
     if (cel->alien == NULL) return ' ';
     switch (cel->alien->tipo) {
         case AL_DRONE: return 'D';
@@ -95,16 +80,15 @@ static char render_celda(struct Juego *juego, int x, int y) {
 
 /*
  * Nombre: tablero_imprimir
- * Parámetros: Juego *juego
+ * Parametros: Juego *juego
  * Retorno: void
- * Descripción: Renderiza el tablero completo, la línea de base del jugador en
- *              y=-1 y el HUD persistente (incluye prompt si el juego no finalizó).
+ * Descripcion: Renderiza el tablero completo, la linea de base del jugador en
+ *              y=-1 y el HUD persistente (incluye prompt si el juego no finalizo).
  */
 void tablero_imprimir(struct Juego *juego) {
     Tablero *t = juego->t;
-    // reposicionar cursor al inicio y limpiar hasta el final para
-    // reescribir el frame sin desplazar la terminal
-    printf("\033[H\033[J");
+    // Limpiar pantalla (Linux/WSL) y reimprimir el frame en la misma posición
+    system("clear");
     for (int y = t->H - 1; y >= 0; --y) {
         for (int x = 0; x < t->W; ++x) {
             char c = render_celda(juego, x, y);
@@ -113,7 +97,7 @@ void tablero_imprimir(struct Juego *juego) {
         printf("\n");
     }
 
-    // Línea de base (jugador en y = -1)
+    // Linea de base (jugador en y = -1)
     for (int x = 0; x < t->W; ++x) {
         if (x == juego->jugador_x) printf(" ^ "); else printf("   ");
     }
@@ -125,7 +109,7 @@ void tablero_imprimir(struct Juego *juego) {
            juego->turno, inventario_restante, juego->vivos,
            juego->armas.ammo_perforador, juego->armas.ammo_especial);
     if (juego->mensaje_hud[0] != '\0') printf("%s\n", juego->mensaje_hud);
-    // Prompt integrado, excepto cuando el juego terminó
+    // Prompt integrado, excepto cuando el juego termino
     if (!juego->fin) {
         printf("Accion [A/D/1/2/3/Q]: ");
         fflush(stdout);
@@ -133,10 +117,10 @@ void tablero_imprimir(struct Juego *juego) {
         fflush(stdout);
     }
 
-    // limpiar indicadores de daño para el próximo render
+    // limpiar indicadores de daño para el proximo render
     for (int y = 0; y < t->H; ++y) {
         for (int x = 0; x < t->W; ++x) {
-            Celda *cel = (Celda *)t->celdas[y][x];
+            Celda *cel = celda_at(t, x, y);
             cel->dano_pend = 0;
         }
     }

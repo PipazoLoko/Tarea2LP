@@ -8,23 +8,23 @@
 
 /*
  * Nombre: celda
- * Parámetros: Juego *j, int x, int y
+ * Parametros: Juego *j, int x, int y
  * Retorno: Celda* (puntero a la celda en (x,y))
- * Descripción: Acceso auxiliar a la celda tipada a partir de la matriz void***.
+ * Descripcion: Acceso auxiliar a la celda tipada a partir de la matriz void***.
  */
 static Celda *celda(struct Juego *j, int x, int y) {
-    return (Celda *)j->t->celdas[y][x];
+    return celda_at(j->t, x, y);
 }
 
 /*
  * Nombre: buscar_primer_alien_en_col
- * Parámetros: Juego *j, int col
+ * Parametros: Juego *j, int col
  * Retorno: int (fila y del primer alien; -1 si no hay)
- * Descripción: Busca el primer alien visible desde la base hacia arriba en la
+ * Descripcion: Busca el primer alien visible desde la base hacia arriba en la
  *              columna indicada.
  */
 static int buscar_primer_alien_en_col(struct Juego *j, int col) {
-    // desde y=0 (base) hacia arriba; jugador está en y=-1
+    // desde y=0 (base) hacia arriba; jugador esta en y=-1
     for (int y = 0; y < j->t->H; ++y) {
         if (celda(j, col, y)->alien) return y;
     }
@@ -33,9 +33,9 @@ static int buscar_primer_alien_en_col(struct Juego *j, int col) {
 
 /*
  * Nombre: arma_normal
- * Parámetros: Juego *j
+ * Parametros: Juego *j
  * Retorno: bool (true: procede y consume turno)
- * Descripción: Disparo recto con daño 1 al primer alien de la columna. Munición
+ * Descripcion: Disparo recto con daño 1 al primer alien de la columna. Municion
  *              infinita.
  */
 bool arma_normal(struct Juego *j) {
@@ -52,10 +52,10 @@ bool arma_normal(struct Juego *j) {
 
 /*
  * Nombre: arma_perforador
- * Parámetros: Juego *j
- * Retorno: bool (true si procede; requiere munición)
- * Descripción: Disparo que atraviesa y daña con 1 a todos los aliens de la
- *              columna actual. Consume munición.
+ * Parametros: Juego *j
+ * Retorno: bool (true si procede; requiere municion)
+ * Descripcion: Disparo que atraviesa y daña con 1 a todos los aliens de la
+ *              columna actual. Consume municion.
  */
 bool arma_perforador(struct Juego *j) {
     if (j->armas.ammo_perforador <= 0) {
@@ -77,9 +77,9 @@ bool arma_perforador(struct Juego *j) {
 
 /*
  * Nombre: arma_especial
- * Parámetros: Juego *j
- * Retorno: bool (true si procede; requiere munición)
- * Descripción: Disparo especial con daño 2 al impacto y daño 1 en rebotes
+ * Parametros: Juego *j
+ * Retorno: bool (true si procede; requiere municion)
+ * Descripcion: Disparo especial con daño 2 al impacto y daño 1 en rebotes
  *              diagonales una fila arriba.
  */
 bool arma_especial(struct Juego *j) {
@@ -107,10 +107,10 @@ bool arma_especial(struct Juego *j) {
 
 /*
  * Nombre: disparar_armas
- * Parámetros: Juego *j, int arma_id (0..2)
- * Retorno: bool (true si el disparo se ejecutó)
- * Descripción: Valida el id y resuelve el disparo vía arreglo de punteros a
- *              función (armas.fn).
+ * Parametros: Juego *j, int arma_id (0..2)
+ * Retorno: bool (true si el disparo se ejecuto)
+ * Descripcion: Valida el id y resuelve el disparo via arreglo de punteros a
+ *              funcion (armas.fn).
  */
 bool disparar_armas(struct Juego *j, int arma_id) {
     if (arma_id < 0 || arma_id > 2) {

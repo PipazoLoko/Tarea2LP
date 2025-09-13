@@ -1,4 +1,4 @@
-// armas.h — Punteros a función (inventario de disparos)
+// armas.h — punteros a funcion / inventario de disparos
 #ifndef ARMAS_H
 #define ARMAS_H
 
@@ -16,7 +16,7 @@ typedef struct Armas {
 
 bool disparar_armas(struct Juego *juego, int arma_id);
 
-// Tres armas
+// tres armas
 bool arma_normal(struct Juego *juego);    // id 0
 bool arma_perforador(struct Juego *juego); // id 1
 bool arma_especial(struct Juego *juego);   // id 2
